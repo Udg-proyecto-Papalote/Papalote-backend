@@ -16,3 +16,10 @@
 2. Conectar la base de datos con el botón `Connect with Connection String`
 3. Introducir la cadena de conexión de MongoDB Atlas
 4. Te vas a la tab de la extensión y verás la conexión con tu base de datos
+
+## Pruebas de la API
+
+1. Descarga e instala Insomnia con el siguiente [enlace](https://insomnia.rest/download)
+2. Abre Insomnia y crea un nuevo workspace
+3. Importa el archivo `InsomniaPapaloteSettings.json` que se encuentra en la carpeta `insomnia`
+4. Listo, ahora puedes hacer pruebas de la API con Insomnia
