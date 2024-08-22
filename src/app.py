@@ -15,7 +15,7 @@ mongo = PyMongo(app)
 
 
 
-# Define the route
+# Register a new user
 @app.route('/users', methods=['POST'])
 def create_user():
     # Receive the data
@@ -23,9 +23,19 @@ def create_user():
     password = request.json['password']
     name = request.json['name']
 
+    response = None
+
     if email and password and name:
         # Hash the password
         hashed_password = generate_password_hash(password)
+
+        # Check if the user already exists
+        user = mongo.db.users.find_one({'email': email})
+
+        if user:
+            response = jsonify({'message': 'User already exists'})
+            response.status_code = 400
+            return response
 
         # Insert the data
         id = mongo.db.users.insert_one({
@@ -34,10 +44,46 @@ def create_user():
             'name': name
         })
 
-        # Return the id
-        return jsonify({'id': str(id.inserted_id)})
-    else:
-        return jsonify({'error': 'Missing parameters'})
+        response = jsonify({
+            'message': 'User created successfully',
+            'id': str(id)
+        })
+        response.status_code = 201
+    
+    return response
+    
+
+# Login
+@app.route('/login', methods=['POST'])
+def login():
+    # Receive the data
+    email = request.json['email']
+    password = request.json['password']
+
+    response = None
+
+    if email and password:
+        # Get the user from the database
+        user = mongo.db.users.find_one({'email': email})
+
+        if user:
+            # Check the password
+            if check_password_hash(user['password'], password):
+                # Add the user ID and name to the headers
+                response.headers['user_id'] = str(user['_id'])
+                response.headers['name'] = user['name']
+                response = jsonify({'message': 'Login successful'})
+                response.status_code = 200
+                
+
+            else:
+                response = jsonify({'message': 'Wrong password'})
+                response.status_code = 400
+        else:
+            response = jsonify({'message': 'User not found'})
+            response.status_code = 400
+
+    return response
 
 # Define the route
 @app.route('/users', methods=['GET'])
