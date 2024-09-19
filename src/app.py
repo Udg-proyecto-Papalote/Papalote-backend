@@ -3,6 +3,9 @@ from flask_pymongo import PyMongo
 from werkzeug.security import generate_password_hash, check_password_hash
 from bson import json_util
 from config import MONGODB_URI
+import os
+from diagnostico import procesar_audio_y_generar_json
+import json
 
 # Create the Flask app
 app = Flask(__name__)
@@ -12,8 +15,6 @@ app.config['MONGO_URI'] = MONGODB_URI
 
 # Create the PyMongo instance
 mongo = PyMongo(app)
-
-
 
 # Register a new user
 @app.route('/users', methods=['POST'])
@@ -52,7 +53,6 @@ def create_user():
     
     return response
     
-
 # Login
 @app.route('/login', methods=['POST'])
 def login():
@@ -97,6 +97,14 @@ def get_users():
     # Return the response
     return Response(response, mimetype='application/json')
 
+# Ruta para diagnóstico
+@app.route('/diagnostico', methods=['GET'])
+def diagnostico():
+    try:
+        resultado_json = procesar_audio_y_generar_json()
+        return jsonify(json.loads(resultado_json)), 200
+    except Exception as e:
+        return jsonify({'message': f'Error al procesar el diagnóstico: {str(e)}'}), 500
 
 # Error handler
 @app.errorhandler(404)
