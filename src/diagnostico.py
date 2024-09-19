@@ -78,7 +78,12 @@ def evaluar_diccion(texto_transcrito, texto_referencia):
     palabras_incorrectas = total_palabras_transcritas - palabras_reconocidas_correctamente
     buena_diccion = palabras_reconocidas_correctamente > (total_palabras_transcritas / 2)
 
-    return buena_diccion, palabras_reconocidas_correctamente, palabras_incorrectas
+    return buena_diccion, palabras_reconocidas_correctamente, palabras_incorrectas, total_palabras_transcritas
+
+def evaluar_modulacion(total_palabras_transcritas):
+    # Evaluar si la modulación es buena (entre 120 y 150 palabras transcritas dividido entre 3)
+    promedio_palabras = total_palabras_transcritas / 3
+    return 120 <= promedio_palabras <= 150
 
 def procesar_audio_y_generar_json():
     tono_alto, audio_filename = procesar_audio_desde_url(AUDIO_URL)
@@ -89,9 +94,12 @@ def procesar_audio_y_generar_json():
     buena_diccion = False
     palabras_correctas = 0
     palabras_incorrectas = 0
+    total_palabras_transcritas = 0
+    buena_modulacion = False
     
     if texto_transcrito:
-        buena_diccion, palabras_correctas, palabras_incorrectas = evaluar_diccion(texto_transcrito, TEXT_REFERENCIA)
+        buena_diccion, palabras_correctas, palabras_incorrectas, total_palabras_transcritas = evaluar_diccion(texto_transcrito, TEXT_REFERENCIA)
+        buena_modulacion = evaluar_modulacion(total_palabras_transcritas)
     else:
         print("No se pudo transcribir el audio correctamente.")
     
@@ -100,10 +108,15 @@ def procesar_audio_y_generar_json():
         "buena_diccion": buena_diccion,
         "texto_transcrito": texto_transcrito,
         "palabras_correctas": palabras_correctas,
-        "palabras_incorrectas": palabras_incorrectas
+        "palabras_incorrectas": palabras_incorrectas,
+        "total_palabras_transcritas": total_palabras_transcritas,
+        "buena modulacion" : buena_modulacion
     }
 
     # Eliminar el archivo de audio temporal
     os.remove(audio_filename)
 
-    return json.dumps(resultado, ensure_ascii=False, indent=4)
+    # Convertir a JSON asegurando que los caracteres especiales se mantengan
+    json_resultado = json.dumps(resultado, ensure_ascii=False, indent=4)
+
+    return json_resultado
