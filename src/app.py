@@ -100,8 +100,11 @@ def get_users():
 # Ruta para diagnóstico
 @app.route('/diagnostico', methods=['GET'])
 def diagnostico():
+    url = request.json['url']
+    genero = request.json['genero']
+    
     try:
-        resultado_json = procesar_audio_y_generar_json()
+        resultado_json = procesar_audio_y_generar_json(url, genero)
         return jsonify(json.loads(resultado_json)), 200
     except Exception as e:
         return jsonify({'message': f'Error al procesar el diagnóstico: {str(e)}'}), 500

@@ -23,10 +23,12 @@ creo que jamás en la vida volví a creer en algo con tanta fe como creí en los
 
 dicen los actuales habitantes de la zona que cuando la luna está ausente, extrañas luces de colores aún atraviesan la noche para aterrizar en el llano. pero yo ya no tengo ánimos para buscar extraterrestres. aquella pequeña y regordeta vigilante intergaláctica ya no existe, como tampoco existe playa del muerto ni los valientes idiotas que ahí se ahogaron.
 """
-# Texto de referencia completo
-AUDIO_URL = "https://res.cloudinary.com/ds8hfmrth/video/upload/v1726717336/papalote/audio_recortado_f3iumc.wav"
+# # Texto de referencia completo
+# AUDIO_URL = "https://res.cloudinary.com/dgojg9f9z/video/upload/v1726968889/mmdsvtap8fujbrwsicod.wav"
 
-def procesar_audio_desde_url(url):
+# genero = "mujer"
+
+def procesar_audio_desde_url(url, genero):
     # Crear un archivo temporal para el audio
     with tempfile.NamedTemporaryFile(delete=False, suffix='.wav') as temp_audio_file:
         filename = temp_audio_file.name
@@ -39,13 +41,25 @@ def procesar_audio_desde_url(url):
         frequencies = pitches[pitches > 0]
         frequencies = frequencies[(frequencies >= 85) & (frequencies <= 300)]
 
-        tono_alto = False
+        tono_voz = ""
         if len(frequencies) > 0:
             average_pitch = np.median(frequencies)
-            if average_pitch >= 160:
-                tono_alto = True
+            #hombre
+            if average_pitch < 118  and genero=="hombre":
+                tono_voz = "tono_bajo"
+            elif average_pitch > 164 and genero=="hombre":
+                tono_voz = "tono_alto"
+            elif average_pitch > 118 and average_pitch < 164 and genero =="hombre":
+                tono_voz = "tono_ideal"
+            #mujer
+            if average_pitch < 193 and genero =="mujer":
+                tono_voz = "tono_bajo"
+            elif average_pitch > 236 and genero =="mujer":
+                tono_voz = "tono_alto"
+            elif average_pitch > 193 and average_pitch < 236 and genero =="mujer":
+                tono_voz = "tono_ideal"
 
-        return tono_alto, filename
+        return tono_voz, filename
 
 def transcribir_audio_a_texto(audio_filename):
     import speech_recognition as sr
@@ -67,12 +81,9 @@ def limpiar_texto_de_puntuaciones(texto):
 
 def evaluar_diccion(texto_transcrito, texto_referencia):
     palabras_transcrito = limpiar_texto_de_puntuaciones(texto_transcrito).split()
-    palabras_referencia = limpiar_texto_de_puntuaciones(texto_referencia).split()
+    palabras_referencia = set(limpiar_texto_de_puntuaciones(texto_referencia).split())
 
-    palabras_reconocidas_correctamente = 0
-    for palabra in palabras_transcrito:
-        if palabra in palabras_referencia:
-            palabras_reconocidas_correctamente += 1
+    palabras_reconocidas_correctamente = sum(1 for palabra in palabras_transcrito if palabra in palabras_referencia)
 
     total_palabras_transcritas = len(palabras_transcrito)
     palabras_incorrectas = total_palabras_transcritas - palabras_reconocidas_correctamente
@@ -83,10 +94,11 @@ def evaluar_diccion(texto_transcrito, texto_referencia):
 def evaluar_modulacion(total_palabras_transcritas):
     # Evaluar si la modulación es buena (entre 120 y 150 palabras transcritas dividido entre 3)
     promedio_palabras = total_palabras_transcritas / 3
+    
     return 120 <= promedio_palabras <= 150
 
-def procesar_audio_y_generar_json():
-    tono_alto, audio_filename = procesar_audio_desde_url(AUDIO_URL)
+def procesar_audio_y_generar_json(url, genero):
+    tono_voz, audio_filename = procesar_audio_desde_url(url, genero)
     
     # Transcribir el audio
     texto_transcrito = transcribir_audio_a_texto(audio_filename)
@@ -104,13 +116,13 @@ def procesar_audio_y_generar_json():
         print("No se pudo transcribir el audio correctamente.")
     
     resultado = {
-        "tono_alto": tono_alto,
+        "tono_voz": tono_voz,
         "buena_diccion": buena_diccion,
         "texto_transcrito": texto_transcrito,
         "palabras_correctas": palabras_correctas,
         "palabras_incorrectas": palabras_incorrectas,
         "total_palabras_transcritas": total_palabras_transcritas,
-        "buena modulacion" : buena_modulacion
+        "buena_modulacion" : buena_modulacion
     }
 
     # Eliminar el archivo de audio temporal
