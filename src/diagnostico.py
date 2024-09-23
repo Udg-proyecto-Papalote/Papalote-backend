@@ -50,14 +50,14 @@ def procesar_audio_desde_url(url, genero):
             elif average_pitch > 164 and genero=="hombre":
                 tono_voz = "tono_alto"
             elif average_pitch > 118 and average_pitch < 164 and genero =="hombre":
-                tono_voz = "tono_ideal"
+                tono_voz = "tono_moderado"
             #mujer
             if average_pitch < 193 and genero =="mujer":
                 tono_voz = "tono_bajo"
             elif average_pitch > 236 and genero =="mujer":
                 tono_voz = "tono_alto"
             elif average_pitch > 193 and average_pitch < 236 and genero =="mujer":
-                tono_voz = "tono_ideal"
+                tono_voz = "tono_moderado"
 
         return tono_voz, filename
 
@@ -79,23 +79,57 @@ def limpiar_texto_de_puntuaciones(texto):
     import string
     return texto.translate(str.maketrans('', '', string.punctuation)).lower()
 
-def evaluar_diccion(texto_transcrito, texto_referencia):
-    palabras_transcrito = limpiar_texto_de_puntuaciones(texto_transcrito).split()
-    palabras_referencia = set(limpiar_texto_de_puntuaciones(texto_referencia).split())
-
-    palabras_reconocidas_correctamente = sum(1 for palabra in palabras_transcrito if palabra in palabras_referencia)
-
-    total_palabras_transcritas = len(palabras_transcrito)
-    palabras_incorrectas = total_palabras_transcritas - palabras_reconocidas_correctamente
-    buena_diccion = palabras_reconocidas_correctamente > (total_palabras_transcritas / 2)
-
-    return buena_diccion, palabras_reconocidas_correctamente, palabras_incorrectas, total_palabras_transcritas
-
 def evaluar_modulacion(total_palabras_transcritas):
     # Evaluar si la modulación es buena (entre 120 y 150 palabras transcritas dividido entre 3)
     promedio_palabras = total_palabras_transcritas / 3
     
     return 120 <= promedio_palabras <= 150
+
+def contar_palabras_con_r(palabras_transcrito, palabras_referencia):
+    """
+    Contar cuántas veces se dijo una palabra con 'r' correctamente o incorrectamente.
+    """
+    palabras_con_r_correctas = 0
+    palabras_con_r_incorrectas = 0
+    palabras_con_r_total = 0
+
+    for palabra_transcrita in palabras_transcrito:
+        if 'r' in palabra_transcrita:
+            palabras_con_r_total += 1
+            if palabra_transcrita in palabras_referencia:
+                palabras_con_r_correctas += 1
+            else:
+                palabras_con_r_incorrectas += 1
+
+    return palabras_con_r_correctas, palabras_con_r_incorrectas, palabras_con_r_total
+
+def evaluar_diccion(texto_transcrito, texto_referencia):
+    palabras_transcrito = limpiar_texto_de_puntuaciones(texto_transcrito).split()
+    # Limitar el texto de referencia hasta la cantidad de palabras que el usuario haya leído
+    palabras_referencia = limpiar_texto_de_puntuaciones(texto_referencia).split()[:len(palabras_transcrito)]
+    
+    # Convertir a conjunto para evaluar precisión
+    palabras_referencia_set = set(palabras_referencia)
+    
+    palabras_reconocidas_correctamente = sum(1 for palabra in palabras_transcrito if palabra in palabras_referencia_set)
+    total_palabras_transcritas = len(palabras_transcrito)
+    palabras_incorrectas = total_palabras_transcritas - palabras_reconocidas_correctamente
+
+    buena_diccion = palabras_reconocidas_correctamente > (total_palabras_transcritas / 2)
+
+    # Contar las palabras con 'r'
+    palabras_con_r_correctas, palabras_con_r_incorrectas, palabras_con_r_total = contar_palabras_con_r(
+        palabras_transcrito, palabras_referencia_set)
+
+    return {
+        "buena_diccion": buena_diccion,
+        "palabras_correctas": palabras_reconocidas_correctamente,
+        "palabras_incorrectas": palabras_incorrectas,
+        "total_palabras_transcritas": total_palabras_transcritas,
+        "palabras_con_r_correctas": palabras_con_r_correctas,
+        "palabras_con_r_incorrectas": palabras_con_r_incorrectas,
+        "palabras_con_r_total": palabras_con_r_total
+    }
 
 def procesar_audio_y_generar_json(url, genero):
     tono_voz, audio_filename = procesar_audio_desde_url(url, genero)
@@ -103,26 +137,26 @@ def procesar_audio_y_generar_json(url, genero):
     # Transcribir el audio
     texto_transcrito = transcribir_audio_a_texto(audio_filename)
     
-    buena_diccion = False
-    palabras_correctas = 0
-    palabras_incorrectas = 0
-    total_palabras_transcritas = 0
+    resultado_diccion = {}
     buena_modulacion = False
     
     if texto_transcrito:
-        buena_diccion, palabras_correctas, palabras_incorrectas, total_palabras_transcritas = evaluar_diccion(texto_transcrito, TEXT_REFERENCIA)
-        buena_modulacion = evaluar_modulacion(total_palabras_transcritas)
+        resultado_diccion = evaluar_diccion(texto_transcrito, TEXT_REFERENCIA)
+        buena_modulacion = evaluar_modulacion(resultado_diccion["total_palabras_transcritas"])
     else:
         print("No se pudo transcribir el audio correctamente.")
     
     resultado = {
         "tono_voz": tono_voz,
-        "buena_diccion": buena_diccion,
+        "buena_diccion": resultado_diccion["buena_diccion"],
         "texto_transcrito": texto_transcrito,
-        "palabras_correctas": palabras_correctas,
-        "palabras_incorrectas": palabras_incorrectas,
-        "total_palabras_transcritas": total_palabras_transcritas,
-        "buena_modulacion" : buena_modulacion
+        "palabras_correctas": resultado_diccion["palabras_correctas"],
+        "palabras_incorrectas": resultado_diccion["palabras_incorrectas"],
+        "total_palabras_transcritas": resultado_diccion["total_palabras_transcritas"],
+        "palabras_con_r_correctas": resultado_diccion["palabras_con_r_correctas"],
+        "palabras_con_r_incorrectas": resultado_diccion["palabras_con_r_incorrectas"],
+        "palabras_con_r_total": resultado_diccion["palabras_con_r_total"],
+        "buena_modulacion": buena_modulacion
     }
 
     # Eliminar el archivo de audio temporal
