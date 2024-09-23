@@ -6,6 +6,7 @@ from config import MONGODB_URI
 import os
 from diagnostico import procesar_audio_y_generar_json
 import json
+from flask_cors import CORS
 
 # Create the Flask app
 app = Flask(__name__)
@@ -15,6 +16,7 @@ app.config['MONGO_URI'] = MONGODB_URI
 
 # Create the PyMongo instance
 mongo = PyMongo(app)
+CORS(app, resources={r"/*": {"origins": "http://localhost:5173"}}, methods=["GET", "POST", "OPTIONS"])
 
 # Register a new user
 @app.route('/users', methods=['POST'])
@@ -98,7 +100,7 @@ def get_users():
     return Response(response, mimetype='application/json')
 
 # Ruta para diagnóstico
-@app.route('/diagnostico', methods=['GET'])
+@app.route('/diagnostico', methods=['POST'])
 def diagnostico():
     url = request.json['url']
     genero = request.json['genero']
