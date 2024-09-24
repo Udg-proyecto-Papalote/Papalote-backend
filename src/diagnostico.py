@@ -28,6 +28,24 @@ dicen los actuales habitantes de la zona que cuando la luna está ausente, extra
 
 # genero = "mujer"
 
+def clasificar_tono_voz(pitch_media, genero):
+    if genero == "hombre":
+        if pitch_media < 118:
+            return "grave"
+        elif 118 <= pitch_media <= 164:
+            return "moderado"
+        else:
+            return "agudo"
+    elif genero == "mujer":
+        if pitch_media < 193:
+            return "grave"
+        elif 193 <= pitch_media <= 236:
+            return "moderado"
+        else:
+            return "agudo"
+    else:
+        return "género no especificado"
+
 def procesar_audio_desde_url(url, genero):
     # Crear un archivo temporal para el audio
     with tempfile.NamedTemporaryFile(delete=False, suffix='.wav') as temp_audio_file:
@@ -36,30 +54,35 @@ def procesar_audio_desde_url(url, genero):
         with open(filename, 'wb') as f:
             f.write(response.content)
 
-        y, sr = librosa.load(filename)
-        pitches, magnitudes = librosa.core.piptrack(y=y, sr=sr)
-        frequencies = pitches[pitches > 0]
-        frequencies = frequencies[(frequencies >= 85) & (frequencies <= 300)]
+    # Cargar el archivo de audio
+    y, sr = librosa.load(filename, sr=None)
 
-        tono_voz = ""
-        if len(frequencies) > 0:
-            average_pitch = np.median(frequencies)
-            #hombre
-            if average_pitch < 118  and genero=="hombre":
-                tono_voz = "tono_grave"
-            elif average_pitch > 164 and genero=="hombre":
-                tono_voz = "tono_agudo"
-            elif average_pitch > 118 and average_pitch < 164 and genero =="hombre":
-                tono_voz = "tono_moderado"
-            #mujer
-            if average_pitch < 193 and genero =="mujer":
-                tono_voz = "tono_grave"
-            elif average_pitch > 236 and genero =="mujer":
-                tono_voz = "tono_agudo"
-            elif average_pitch > 193 and average_pitch < 236 and genero =="mujer":
-                tono_voz = "tono_moderado"
+    # Verificar si hay contenido en el audio
+    if np.all(y == 0):
+        return json.dumps({"mensaje": "El audio está vacío o es silencio", "pitch_medio": None, "filename": filename})
 
-        return tono_voz, filename
+    # Encontrar los segmentos de audio no silenciosos
+    intervals = librosa.effects.split(y, top_db=20)
+
+    pitches = []
+    
+    # Analizar cada segmento no silencioso
+    for start, end in intervals:
+        segment = y[start:end]
+        # Calcular el pitch utilizando YIN
+        pitch = librosa.yin(segment, fmin=50, fmax=400, sr=sr)
+
+        # Filtrar las frecuencias válidas
+        pitches.extend(pitch[pitch > 0])
+    
+    # Verificar si hay frecuencias válidas
+    if len(pitches) > 0:
+        pitch_media = np.nanmedian(pitches)
+        tono = clasificar_tono_voz(pitch_media, genero)
+        return tono, filename
+    else:
+        return "No se encontraron frecuencias válidas", filename
+
 
 def transcribir_audio_a_texto(audio_filename):
     import speech_recognition as sr
@@ -208,7 +231,6 @@ def procesar_audio_y_generar_json(url, genero):
         resultado_diccion = evaluar_diccion(texto_transcrito, TEXT_REFERENCIA)
         buena_modulacion = evaluar_modulacion(resultado_diccion["total_palabras_transcritas"])
     else:
-        print("No se pudo transcribir el audio correctamente.")
         resultado_diccion = {
             "buena_diccion": False,
             "palabras_correctas": 0,
@@ -228,7 +250,6 @@ def procesar_audio_y_generar_json(url, genero):
         )
     except Exception as e:
         # En caso de error, devolver una lista vacía de recomendaciones
-        print(f"Error al generar recomendaciones: {str(e)}")
         recomendaciones = []
 
     resultado = {
