@@ -46,16 +46,16 @@ def procesar_audio_desde_url(url, genero):
             average_pitch = np.median(frequencies)
             #hombre
             if average_pitch < 118  and genero=="hombre":
-                tono_voz = "tono_bajo"
+                tono_voz = "tono_grave"
             elif average_pitch > 164 and genero=="hombre":
-                tono_voz = "tono_alto"
+                tono_voz = "tono_agudo"
             elif average_pitch > 118 and average_pitch < 164 and genero =="hombre":
                 tono_voz = "tono_moderado"
             #mujer
             if average_pitch < 193 and genero =="mujer":
-                tono_voz = "tono_bajo"
+                tono_voz = "tono_grave"
             elif average_pitch > 236 and genero =="mujer":
-                tono_voz = "tono_alto"
+                tono_voz = "tono_agudo"
             elif average_pitch > 193 and average_pitch < 236 and genero =="mujer":
                 tono_voz = "tono_moderado"
 
@@ -81,8 +81,7 @@ def limpiar_texto_de_puntuaciones(texto):
 
 def evaluar_modulacion(total_palabras_transcritas):
     # Evaluar si la modulación es buena (entre 120 y 150 palabras transcritas dividido entre 3)
-    promedio_palabras = total_palabras_transcritas / 3
-    
+    promedio_palabras = total_palabras_transcritas / 2
     return 120 <= promedio_palabras <= 150
 
 def contar_palabras_con_r(palabras_transcrito, palabras_referencia):
@@ -131,6 +130,71 @@ def evaluar_diccion(texto_transcrito, texto_referencia):
         "palabras_con_r_total": palabras_con_r_total
     }
 
+def generar_recomendaciones(diccion, modulacion, tono):
+    recomendaciones_set = set()  # Conjunto para evitar duplicados
+
+    # 1. Evaluar dicción
+    if diccion:  # Buena dicción
+        recomendaciones_set.add("Palabras de difícil pronunciación I")  # O cualquier ejercicio de dicción que desees agregar
+    else:  # Mala dicción
+        recomendaciones_set.update([
+            "Respiración I",
+            "Articulación I",
+            "Articulación II",
+            "Vocalización I",
+            "Vocalización II",
+            "Dicción 1",
+            "Dicción 2",
+            "Dicción 3",
+            "Dicción 6",
+            "Dicción 7",
+            "Dicción 12",
+            "Dicción 13",
+            "Dicción 15",
+            "Letra R I",
+            "Letra R II",
+            "Letra R III",
+            "Palabras de difícil pronunciación I",
+            "Palabras de difícil pronunciación II"
+        ])
+
+    # 2. Evaluar modulación
+    if modulacion:  # Buena modulación
+        recomendaciones_set.add("Palabras de difícil pronunciación II")  # O cualquier ejercicio de modulación que desees agregar
+    else:  # Mala modulación
+        recomendaciones_set.update([
+            "Respiración I",
+            "Palabras de difícil pronunciación I",
+            "Palabras de difícil pronunciación II",
+            "Caudal I",
+            "Articulación I",
+            "Articulación II",
+            "Potencia II",
+            "Impostación1"
+        ])
+
+    # 3. Evaluar tono de voz
+    if tono == "tono_alto":  # Tono agudo
+        recomendaciones_set.update([
+            "Respiración I",
+            "Potencia II",
+            "Impostación1"
+        ])
+    elif tono == "tono_moderado":  # Tono moderado
+        recomendaciones_set.add("Respiración I")
+    elif tono == "tono_bajo":  # Tono grave
+        recomendaciones_set.update([
+            "Respiración I",
+            "Potencia II",
+            "Impostación1"
+        ])
+
+    # Convertir el conjunto a lista
+    recomendaciones_finales = list(recomendaciones_set)
+
+    return recomendaciones_finales  # Devolver la lista de recomendaciones
+
+
 def procesar_audio_y_generar_json(url, genero):
     tono_voz, audio_filename = procesar_audio_desde_url(url, genero)
     
@@ -145,7 +209,28 @@ def procesar_audio_y_generar_json(url, genero):
         buena_modulacion = evaluar_modulacion(resultado_diccion["total_palabras_transcritas"])
     else:
         print("No se pudo transcribir el audio correctamente.")
+        resultado_diccion = {
+            "buena_diccion": False,
+            "palabras_correctas": 0,
+            "palabras_incorrectas": 0,
+            "total_palabras_transcritas": 0,
+            "palabras_con_r_correctas": 0,
+            "palabras_con_r_incorrectas": 0,
+            "palabras_con_r_total": 0
+        }
     
+    try:
+        # Generar recomendaciones basadas en los resultados
+        recomendaciones = generar_recomendaciones(
+            diccion=resultado_diccion["buena_diccion"], 
+            modulacion=buena_modulacion, 
+            tono=tono_voz
+        )
+    except Exception as e:
+        # En caso de error, devolver una lista vacía de recomendaciones
+        print(f"Error al generar recomendaciones: {str(e)}")
+        recomendaciones = []
+
     resultado = {
         "tono_voz": tono_voz,
         "buena_diccion": resultado_diccion["buena_diccion"],
@@ -156,7 +241,8 @@ def procesar_audio_y_generar_json(url, genero):
         "palabras_con_r_correctas": resultado_diccion["palabras_con_r_correctas"],
         "palabras_con_r_incorrectas": resultado_diccion["palabras_con_r_incorrectas"],
         "palabras_con_r_total": resultado_diccion["palabras_con_r_total"],
-        "buena_modulacion": buena_modulacion
+        "buena_modulacion": buena_modulacion,
+        "recomendaciones": recomendaciones
     }
 
     # Eliminar el archivo de audio temporal
@@ -166,3 +252,4 @@ def procesar_audio_y_generar_json(url, genero):
     json_resultado = json.dumps(resultado, ensure_ascii=False, indent=4)
 
     return json_resultado
+
