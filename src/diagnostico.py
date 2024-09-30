@@ -7,7 +7,7 @@ import tempfile
 
 # Texto de referencia y URL fijos
 TEXT_REFERENCIA = """
-los primeros reportes de actividad aeronáutica irregular detectada sobre los municipios del sotavento veracruz boca del río alvarado y tlalixcoyan principalmente datan de finales de los años ochenta. los habitantes de las zonas agrestes dedicados principalmente a la pesca y la cría de ganado estaban ya habituados a la presencia de las luces nocturnas. los más viejos las llamaban brujas, los más informados avionetas. incluso conocían el lugar en donde las luces descendían: el llano de la víbora, una brecha natural bordeada de matorrales y espinos que el ejército y la policía judicial federal empleaban a menudo como pista de aterrizaje.
+aquí no es Miami, los primeros reportes de actividad aeronáutica irregular detectada sobre los municipios del sotavento veracruz boca del río alvarado y tlalixcoyan principalmente datan de finales de los años ochenta. los habitantes de las zonas agrestes dedicados principalmente a la pesca y la cría de ganado estaban ya habituados a la presencia de las luces nocturnas. los más viejos las llamaban brujas, los más informados avionetas. incluso conocían el lugar en donde las luces descendían: el llano de la víbora, una brecha natural bordeada de matorrales y espinos que el ejército y la policía judicial federal empleaban a menudo como pista de aterrizaje.
 
 en esa planicie natural que se elevaba entre charcas y esteros, la presencia de soldados y agentes federales era algo común para los habitantes de la zona. después de todo, la pista de la víbora era usada por las fuerzas armadas para realizar maniobras especiales. por ello, a nadie le extrañó que a finales de octubre de mil novecientos noventa y uno llegaran cuadrillas de soldados a tusar la maleza tupida a golpe de machete y limpiar el sendero de obstáculos.
 
@@ -105,25 +105,25 @@ def limpiar_texto_de_puntuaciones(texto):
 def evaluar_modulacion(total_palabras_transcritas):
     # Evaluar si la modulación es buena (entre 120 y 150 palabras transcritas dividido entre 3)
     promedio_palabras = total_palabras_transcritas / 2
-    return 120 <= promedio_palabras <= 150
+    return 135 <= promedio_palabras <= 150
 
-def contar_palabras_con_r(palabras_transcrito, palabras_referencia):
-    """
-    Contar cuántas veces se dijo una palabra con 'r' correctamente o incorrectamente.
-    """
-    palabras_con_r_correctas = 0
-    palabras_con_r_incorrectas = 0
-    palabras_con_r_total = 0
+# def contar_palabras_con_r(palabras_transcrito, palabras_referencia):
+#     """
+#     Contar cuántas veces se dijo una palabra con 'r' correctamente o incorrectamente.
+#     """
+#     palabras_con_r_correctas = 0
+#     palabras_con_r_incorrectas = 0
+#     palabras_con_r_total = 0
 
-    for palabra_transcrita in palabras_transcrito:
-        if 'r' in palabra_transcrita:
-            palabras_con_r_total += 1
-            if palabra_transcrita in palabras_referencia:
-                palabras_con_r_correctas += 1
-            else:
-                palabras_con_r_incorrectas += 1
+#     for palabra_transcrita in palabras_transcrito:
+#         if 'r' in palabra_transcrita:
+#             palabras_con_r_total += 1
+#             if palabra_transcrita in palabras_referencia:
+#                 palabras_con_r_correctas += 1
+#             else:
+#                 palabras_con_r_incorrectas += 1
 
-    return palabras_con_r_correctas, palabras_con_r_incorrectas, palabras_con_r_total
+#     return palabras_con_r_correctas, palabras_con_r_incorrectas, palabras_con_r_total
 
 def evaluar_diccion(texto_transcrito, texto_referencia):
     palabras_transcrito = limpiar_texto_de_puntuaciones(texto_transcrito).split()
@@ -132,25 +132,27 @@ def evaluar_diccion(texto_transcrito, texto_referencia):
     
     # Convertir a conjunto para evaluar precisión
     palabras_referencia_set = set(palabras_referencia)
-    
+
     palabras_reconocidas_correctamente = sum(1 for palabra in palabras_transcrito if palabra in palabras_referencia_set)
     total_palabras_transcritas = len(palabras_transcrito)
     palabras_incorrectas = total_palabras_transcritas - palabras_reconocidas_correctamente
 
-    buena_diccion = palabras_reconocidas_correctamente > (total_palabras_transcritas / 2)
-
+    # Evaluar si al menos el 90% de las palabras fueron entendidas correctamente
+    buena_diccion = palabras_reconocidas_correctamente >= (total_palabras_transcritas * 0.9)
+    
+    
     # Contar las palabras con 'r'
-    palabras_con_r_correctas, palabras_con_r_incorrectas, palabras_con_r_total = contar_palabras_con_r(
-        palabras_transcrito, palabras_referencia_set)
+    # palabras_con_r_correctas, palabras_con_r_incorrectas, palabras_con_r_total = contar_palabras_con_r(
+    #     palabras_transcrito, palabras_referencia_set)
 
     return {
         "buena_diccion": buena_diccion,
         "palabras_correctas": palabras_reconocidas_correctamente,
         "palabras_incorrectas": palabras_incorrectas,
         "total_palabras_transcritas": total_palabras_transcritas,
-        "palabras_con_r_correctas": palabras_con_r_correctas,
-        "palabras_con_r_incorrectas": palabras_con_r_incorrectas,
-        "palabras_con_r_total": palabras_con_r_total
+        # "palabras_con_r_correctas": palabras_con_r_correctas,
+        # "palabras_con_r_incorrectas": palabras_con_r_incorrectas,
+        # "palabras_con_r_total": palabras_con_r_total
     }
 
 def generar_recomendaciones(diccion, modulacion, tono):
@@ -193,7 +195,7 @@ def generar_recomendaciones(diccion, modulacion, tono):
             "Articulación I",
             "Articulación II",
             "Potencia II",
-            "Impostación1"
+            "Impostación I"
         ])
 
     # 3. Evaluar tono de voz
@@ -201,7 +203,7 @@ def generar_recomendaciones(diccion, modulacion, tono):
         recomendaciones_set.update([
             "Respiración I",
             "Potencia II",
-            "Impostación1"
+            "Impostación I"
         ])
     elif tono == "tono_moderado":  # Tono moderado
         recomendaciones_set.add("Respiración I")
@@ -209,7 +211,7 @@ def generar_recomendaciones(diccion, modulacion, tono):
         recomendaciones_set.update([
             "Respiración I",
             "Potencia II",
-            "Impostación1"
+            "Impostación I"
         ])
 
     # Convertir el conjunto a lista
@@ -259,9 +261,9 @@ def procesar_audio_y_generar_json(url, genero):
         "palabras_correctas": resultado_diccion["palabras_correctas"],
         "palabras_incorrectas": resultado_diccion["palabras_incorrectas"],
         "total_palabras_transcritas": resultado_diccion["total_palabras_transcritas"],
-        "palabras_con_r_correctas": resultado_diccion["palabras_con_r_correctas"],
-        "palabras_con_r_incorrectas": resultado_diccion["palabras_con_r_incorrectas"],
-        "palabras_con_r_total": resultado_diccion["palabras_con_r_total"],
+        # "palabras_con_r_correctas": resultado_diccion["palabras_con_r_correctas"],
+        # "palabras_con_r_incorrectas": resultado_diccion["palabras_con_r_incorrectas"],
+        # "palabras_con_r_total": resultado_diccion["palabras_con_r_total"],
         "buena_modulacion": buena_modulacion,
         "recomendaciones": recomendaciones
     }
