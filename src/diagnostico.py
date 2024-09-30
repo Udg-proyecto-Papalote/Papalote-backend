@@ -7,7 +7,7 @@ import tempfile
 
 # Texto de referencia y URL fijos
 TEXT_REFERENCIA = """
-aquí no es Miami, los primeros reportes de actividad aeronáutica irregular detectada sobre los municipios del sotavento veracruz boca del río alvarado y tlalixcoyan principalmente datan de finales de los años ochenta. los habitantes de las zonas agrestes dedicados principalmente a la pesca y la cría de ganado estaban ya habituados a la presencia de las luces nocturnas. los más viejos las llamaban brujas, los más informados avionetas. incluso conocían el lugar en donde las luces descendían: el llano de la víbora, una brecha natural bordeada de matorrales y espinos que el ejército y la policía judicial federal empleaban a menudo como pista de aterrizaje.
+aquí no es Miami,los primeros reportes de actividad aeronáutica irregular detectada sobre los municipios del sotavento veracruz boca del río alvarado y tlalixcoyan principalmente datan de finales de los años ochenta. los habitantes de las zonas agrestes dedicados principalmente a la pesca y la cría de ganado estaban ya habituados a la presencia de las luces nocturnas. los más viejos las llamaban brujas, los más informados avionetas. incluso conocían el lugar en donde las luces descendían: el llano de la víbora, una brecha natural bordeada de matorrales y espinos que el ejército y la policía judicial federal empleaban a menudo como pista de aterrizaje.
 
 en esa planicie natural que se elevaba entre charcas y esteros, la presencia de soldados y agentes federales era algo común para los habitantes de la zona. después de todo, la pista de la víbora era usada por las fuerzas armadas para realizar maniobras especiales. por ello, a nadie le extrañó que a finales de octubre de mil novecientos noventa y uno llegaran cuadrillas de soldados a tusar la maleza tupida a golpe de machete y limpiar el sendero de obstáculos.
 
@@ -31,18 +31,18 @@ dicen los actuales habitantes de la zona que cuando la luna está ausente, extra
 def clasificar_tono_voz(pitch_media, genero):
     if genero == "hombre":
         if pitch_media < 118:
-            return "grave"
+            return "tono_grave"
         elif 118 <= pitch_media <= 164:
-            return "moderado"
+            return "tono_moderado"
         else:
-            return "agudo"
+            return "tono_agudo"
     elif genero == "mujer":
         if pitch_media < 193:
-            return "grave"
+            return "tono_grave"
         elif 193 <= pitch_media <= 236:
-            return "moderado"
+            return "tono_moderado"
         else:
-            return "agudo"
+            return "tono_agudo"
     else:
         return "género no especificado"
 
@@ -199,7 +199,7 @@ def generar_recomendaciones(diccion, modulacion, tono):
         ])
 
     # 3. Evaluar tono de voz
-    if tono == "tono_alto":  # Tono agudo
+    if tono == "tono_agudo":  # Tono agudo
         recomendaciones_set.update([
             "Respiración I",
             "Potencia II",
@@ -207,7 +207,7 @@ def generar_recomendaciones(diccion, modulacion, tono):
         ])
     elif tono == "tono_moderado":  # Tono moderado
         recomendaciones_set.add("Respiración I")
-    elif tono == "tono_bajo":  # Tono grave
+    elif tono == "tono_grave":  # Tono grave
         recomendaciones_set.update([
             "Respiración I",
             "Potencia II",
