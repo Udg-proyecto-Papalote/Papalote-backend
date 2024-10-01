@@ -29,22 +29,22 @@ dicen los actuales habitantes de la zona que cuando la luna está ausente, extra
 # genero = "mujer"
 
 def clasificar_tono_voz(pitch_media, genero):
-    if genero == "hombre":
-        if pitch_media < 118:
-            return "tono_grave"
-        elif 118 <= pitch_media <= 164:
-            return "tono_moderado"
+    umbrales = {
+        "hombre": (118, 164),
+        "mujer": (193, 236)
+    }
+
+    if genero in umbrales:
+        bajo, alto = umbrales[genero]
+        if pitch_media < bajo:
+            return "grave"
+        elif bajo <= pitch_media <= alto:
+            return "moderado"
         else:
-            return "tono_agudo"
-    elif genero == "mujer":
-        if pitch_media < 193:
-            return "tono_grave"
-        elif 193 <= pitch_media <= 236:
-            return "tono_moderado"
-        else:
-            return "tono_agudo"
+            return "agudo"
     else:
         return "género no especificado"
+
 
 def procesar_audio_desde_url(url, genero):
     # Crear un archivo temporal para el audio
@@ -105,7 +105,7 @@ def limpiar_texto_de_puntuaciones(texto):
 def evaluar_modulacion(total_palabras_transcritas):
     # Evaluar si la modulación es buena (entre 120 y 150 palabras transcritas dividido entre 3)
     promedio_palabras = total_palabras_transcritas / 2
-    return 135 <= promedio_palabras <= 150
+    return 135 <= promedio_palabras <= 160
 
 # def contar_palabras_con_r(palabras_transcrito, palabras_referencia):
 #     """
@@ -199,15 +199,15 @@ def generar_recomendaciones(diccion, modulacion, tono):
         ])
 
     # 3. Evaluar tono de voz
-    if tono == "tono_agudo":  # Tono agudo
+    if tono == "agudo":  # Tono agudo
         recomendaciones_set.update([
             "Respiración I",
             "Potencia II",
             "Impostación I"
         ])
-    elif tono == "tono_moderado":  # Tono moderado
+    elif tono == "moderado":  # Tono moderado
         recomendaciones_set.add("Respiración I")
-    elif tono == "tono_grave":  # Tono grave
+    elif tono == "grave":  # Tono grave
         recomendaciones_set.update([
             "Respiración I",
             "Potencia II",
