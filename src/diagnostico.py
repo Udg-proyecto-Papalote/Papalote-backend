@@ -103,27 +103,26 @@ def limpiar_texto_de_puntuaciones(texto):
     return texto.translate(str.maketrans('', '', string.punctuation)).lower()
 
 def evaluar_modulacion(total_palabras_transcritas):
-    # Evaluar si la modulación es buena (entre 120 y 150 palabras transcritas dividido entre 3)
-    promedio_palabras = total_palabras_transcritas / 2
-    return 135 <= promedio_palabras <= 160
+    buena_modulacion = total_palabras_transcritas / 2
+    return 135 <= buena_modulacion <= 160
 
-# def contar_palabras_con_r(palabras_transcrito, palabras_referencia):
-#     """
-#     Contar cuántas veces se dijo una palabra con 'r' correctamente o incorrectamente.
-#     """
-#     palabras_con_r_correctas = 0
-#     palabras_con_r_incorrectas = 0
-#     palabras_con_r_total = 0
+def contar_palabras_con_r(palabras_transcrito, palabras_referencia):
+    """
+    Contar cuántas veces se dijo una palabra con 'r' correctamente o incorrectamente.
+    """
+    palabras_con_r_correctas = 0
+    palabras_con_r_incorrectas = 0
+    palabras_con_r_total = 0
 
-#     for palabra_transcrita in palabras_transcrito:
-#         if 'r' in palabra_transcrita:
-#             palabras_con_r_total += 1
-#             if palabra_transcrita in palabras_referencia:
-#                 palabras_con_r_correctas += 1
-#             else:
-#                 palabras_con_r_incorrectas += 1
+    for palabra_transcrita in palabras_transcrito:
+        if 'r' in palabra_transcrita:
+            palabras_con_r_total += 1
+            if palabra_transcrita in palabras_referencia:
+                palabras_con_r_correctas += 1
+            else:
+                palabras_con_r_incorrectas += 1
 
-#     return palabras_con_r_correctas, palabras_con_r_incorrectas, palabras_con_r_total
+    return palabras_con_r_correctas, palabras_con_r_incorrectas, palabras_con_r_total
 
 def evaluar_diccion(texto_transcrito, texto_referencia):
     palabras_transcrito = limpiar_texto_de_puntuaciones(texto_transcrito).split()
@@ -142,17 +141,17 @@ def evaluar_diccion(texto_transcrito, texto_referencia):
     
     
     # Contar las palabras con 'r'
-    # palabras_con_r_correctas, palabras_con_r_incorrectas, palabras_con_r_total = contar_palabras_con_r(
-    #     palabras_transcrito, palabras_referencia_set)
+    palabras_con_r_correctas, palabras_con_r_incorrectas, palabras_con_r_total = contar_palabras_con_r(
+        palabras_transcrito, palabras_referencia_set)
 
     return {
         "buena_diccion": buena_diccion,
         "palabras_correctas": palabras_reconocidas_correctamente,
         "palabras_incorrectas": palabras_incorrectas,
         "total_palabras_transcritas": total_palabras_transcritas,
-        # "palabras_con_r_correctas": palabras_con_r_correctas,
-        # "palabras_con_r_incorrectas": palabras_con_r_incorrectas,
-        # "palabras_con_r_total": palabras_con_r_total
+        "palabras_con_r_correctas": palabras_con_r_correctas,
+        "palabras_con_r_incorrectas": palabras_con_r_incorrectas,
+        "palabras_con_r_total": palabras_con_r_total
     }
 
 def generar_recomendaciones(diccion, modulacion, tono):
@@ -261,9 +260,9 @@ def procesar_audio_y_generar_json(url, genero):
         "palabras_correctas": resultado_diccion["palabras_correctas"],
         "palabras_incorrectas": resultado_diccion["palabras_incorrectas"],
         "total_palabras_transcritas": resultado_diccion["total_palabras_transcritas"],
-        # "palabras_con_r_correctas": resultado_diccion["palabras_con_r_correctas"],
-        # "palabras_con_r_incorrectas": resultado_diccion["palabras_con_r_incorrectas"],
-        # "palabras_con_r_total": resultado_diccion["palabras_con_r_total"],
+        "palabras_con_r_correctas": resultado_diccion["palabras_con_r_correctas"],
+        "palabras_con_r_incorrectas": resultado_diccion["palabras_con_r_incorrectas"],
+        "palabras_con_r_total": resultado_diccion["palabras_con_r_total"],
         "buena_modulacion": buena_modulacion,
         "recomendaciones": recomendaciones
     }
