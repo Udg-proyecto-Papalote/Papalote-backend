@@ -7,7 +7,7 @@ import json
 app = Flask(__name__)
 
 # Configure CORS
-CORS(app, resources={r"/*": {"origins": "*"}})s
+CORS(app, resources={r"/*": {"origins": "*"}})
 
 # Ruta para diagnóstico
 @app.route('/diagnostico', methods=['POST'])
